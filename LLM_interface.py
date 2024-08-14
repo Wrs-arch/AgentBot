@@ -16,10 +16,10 @@ def init_llm():
     config = configparser.ConfigParser()
     config.read('config.ini')
     config.sections()
-    tokenizer = AutoTokenizer.from_pretrained("unsloth/gemma-2-2b-it-bnb-4bit",
+    tokenizer = AutoTokenizer.from_pretrained("google/gemma-2-2b-it",
                                               cache_dir=config['paths']['cache_path'])
     model = AutoModelForCausalLM.from_pretrained(
-        "unsloth/gemma-2-2b-it-bnb-4bit",
+        "google/gemma-2-2b-it",
         cache_dir=config['paths']['cache_path'],
         device_map="auto",
         torch_dtype=torch.bfloat16,
@@ -29,7 +29,7 @@ def init_llm():
                     tokenizer=tokenizer,
                     torch_dtype=torch.bfloat16,
                     device_map="auto",
-                    max_new_tokens=100,
+                    max_new_tokens=250,
                     # do_sample=True,
                     num_return_sequences=1,
                     eos_token_id=tokenizer.eos_token_id
