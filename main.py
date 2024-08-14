@@ -17,7 +17,7 @@ dp = Dispatcher()
 
 @dp.message(Command('start'))
 async def start(message: types.Message) -> None:
-    await message.answer('Welcome!', reply_markup=main_keyboard)
+    await message.answer('Добро пожаловать!', reply_markup=main_keyboard)
 
 
 @dp.message(F.text == 'Меню')
@@ -79,9 +79,13 @@ async def load_pdf(message: types.Message, state: FSMContext) -> None:
 async def remove_info(message: types.Message, state: FSMContext) -> None:
     msg = message.text
     if msg == 'Да':
-        delete_database()
-        await state.set_state(None)
-        await message.answer('База данных удалена. \nВы возвращены в главное меню.', reply_markup=main_keyboard)
+        try:
+            delete_database()
+            await state.set_state(None)
+            await message.answer('База данных удалена. \nВы возвращены в главное меню.', reply_markup=main_keyboard)
+        except FileNotFoundError:
+            await state.set_state(None)
+            await message.answer('База данных отсутствует на устройстве. \nВы возвращены в главное меню.', reply_markup=main_keyboard)
     elif msg == 'Нет':
         await state.set_state(None)
         await message.answer('База данных не удалена \nВы возвращены в главное меню.', reply_markup=main_keyboard)
@@ -102,7 +106,7 @@ async def create_note(message: types.Message, state: FSMContext) -> None:
 async def title_note(message: types.Message, state: FSMContext) -> None:
     global title_str
     title_str = message.text
-    await message.answer('Опишите содержание заметку')
+    await message.answer('Опишите содержание заметки')
     await state.set_state(RAGState.statement)
 
 
@@ -125,8 +129,10 @@ async def request_to_LLM(message: types.Message, state: FSMContext) -> None:
 
 @dp.message(LLMState.get_query)
 async def get_query_LLM(message: types.Message, state: FSMContext) -> None:
-    database = download_db()
-
+    try:
+        database = download_db()
+    except Exception as ex:
+        await message.answer('База данных отсутствует. Я не могу ответить на такой запрос.')
     llm_query = message.text
     llm_answer = get_model_response(llm, llm_query)
     await message.answer(llm_answer)
