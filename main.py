@@ -66,9 +66,10 @@ async def load_pdf(message: types.Message, state: FSMContext) -> None:
         file_id = message.document.file_id
         file = await bot.get_file(file_id)
         file_path = file.file_path
-        file_destination = "D:\Programming\DS_project\downloaders\\text.pdf"
+        file_destination = config['paths']['save_path']
         await bot.download_file(file_path, file_destination)
         pdfloader(file_destination)
+        os.remove(file_destination)
     else:
         url = message.text
         webloader(url)
@@ -135,7 +136,7 @@ async def get_query_LLM(message: types.Message, state: FSMContext) -> None:
         await message.answer('База данных отсутствует. Я не могу ответить на такой запрос.')
     llm_query = message.text
     llm_answer = get_model_response(llm, llm_query)
-    await message.answer(llm_answer)
+    await message.answer(llm_answer.split('Ответ:')[1])
     await state.set_state(None)
 
 

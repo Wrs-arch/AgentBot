@@ -29,7 +29,7 @@ def init_llm():
                     tokenizer=tokenizer,
                     torch_dtype=torch.bfloat16,
                     device_map="auto",
-                    max_new_tokens=250,
+                    max_new_tokens=200,
                     # do_sample=True,
                     num_return_sequences=1,
                     eos_token_id=tokenizer.eos_token_id
@@ -41,35 +41,24 @@ def init_llm():
 
 
 # Создание промпта
-def create_prompt(system_prompt):
-    template = "Вы - продвинутый, понимающий и адекватный ассистент. Отвечаете на запросы на русском языке. " \
-               "Вы качественнно обрабатываете текст и отказываете в запросах, содержащих в себе потенциальную угрозу жизни человека. " \
-               "Отвечай кратко, максимум четырьмя предложениями. " \
-               "Помогите, пожалуйста, со следующим запросом: \n {context} \n"
+def create_prompt():
+    template = """Вы - продвинутый, понимающий и адекватный ассистент. Отвечаете на запросы на русском языке.\n
+               Вы качественнно обрабатываете текст и отказываете в запросах, содержащих в себе потенциальную угрозу жизни человека.\n
+               Отвечай полноценно, качественно, максимум 10 предложений.\n
+               Помогите, пожалуйста, со следующим запросом: \n {query} \n 
+               Ответ ищи, основываясь на тексте, но не ограничивайся им: {context}
+               Ответ: """
 
-    prompt = PromptTemplate(template=template, input_variables=['context'])
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", system_prompt + ":\n\n{context}")]
-    )
+    prompt = PromptTemplate(template=template, input_variables=['query', 'context'])
     return prompt
 
 
 # Получение ответа от модели
-def get_model_response(llm, context):
+def get_model_response(llm, query):
     retriever = download_db()
-    docs = retriever.similarity_search(context, k=1)
-    prompt = create_prompt(context)
+    docs = retriever.similarity_search(query, k=2)
+    prompt = create_prompt()
     chain = create_stuff_documents_chain(llm, prompt)
     res_chain = chain | StrOutputParser()
-    results = res_chain.invoke({'context': docs})
-    # # llm_chain = retriever | prompt | llm | StrOutputParser
-    #
-    # llm_chain = (
-    #         {"context": docs, "question": RunnablePassthrough()}
-    #         | prompt
-    #         | llm
-    #         | StrOutputParser()
-    # )
-    #
-    # results = llm_chain.invoke(content)
+    results = res_chain.invoke({'query': query, 'context': docs})
     return results

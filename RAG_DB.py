@@ -13,7 +13,7 @@ config.sections()
 
 
 def prepare_note_doc(title, statement):
-    doc = Document(page_content=title, metadata={'note': statement})
+    doc = Document(page_content=statement, metadata={'title': title})
     return doc
 
 
@@ -96,20 +96,19 @@ def delete_database():
     os.remove(config['paths']['faiss_pkl_path'])
     os.rmdir(config['paths']['faiss_path'])
 
-
+# Доработать внесение файлов с нуля, а не только в существующую базу.
 def pdfloader(file_destination):
     loader = PyPDFLoader(file_destination)
     docs = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200, length_function=len)
     splits = text_splitter.split_documents(docs)
-
     embed_to_db(splits)
 
-
+#
 def webloader(file_destination):
 
     loader = WebBaseLoader(file_destination)
     docs = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
     splits = text_splitter.split_documents(docs)
     embed_to_db(splits)
